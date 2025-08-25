@@ -1,0 +1,98 @@
+{
+  "B1": {
+    "basis_op": "GEMM / matmul",
+    "covers": "Dense linear maps, projections, MLP weights, QKV/V heads when folded",
+    "typical_kernels_examples": ["gemm", "mm", "batched matmul"],
+    "rough_flops_shape": "~2·M·N·K",
+    "bytes_memory_pattern": "High reuse if tiled; compute-bound when big",
+    "extra_knobs_to_log": ["alpha_flops", "alpha_calls", "alpha_intensity"]
+  },
+  "B2": {
+    "basis_op": "Convolution",
+    "covers": "Spatial convs (1D/2D/3D), depthwise, grouped, transposed",
+    "typical_kernels_examples": ["conv*", "im2col+gemm", "Winograd", "FFT"],
+    "rough_flops_shape": "~2·N·H·W·C_out·K²·C_in/groups",
+    "bytes_memory_pattern": "Often bandwidth-bound for small K; weight reuse helps",
+    "extra_knobs_to_log": ["alpha_flops", "alpha_bytes", "kernel_algo_tag"]
+  },
+  "B3": {
+    "basis_op": "Content read/write",
+    "covers": "Attention scores, softmax, weighted sum; kNN lookup, gated aggregation",
+    "typical_kernels_examples": ["QK^T", "softmax", "AV", "top-k lookup"],
+    "rough_flops_shape": "Scores: ~2·B·H·T²·d_k; AV: ~2·B·H·T²·d_v",
+    "bytes_memory_pattern": "KV cache traffic dominates long T",
+    "extra_knobs_to_log": ["alpha_selectivity (top-k)", "KV_bytes", "window_size"]
+  },
+  "B4": {
+    "basis_op": "Elementwise nonlinearity",
+    "covers": "ReLU/GELU/SiLU, sigmoid/tanh, spline evals (KAN), gating",
+    "typical_kernels_examples": ["pointwise activations", "small polynomials/splines"],
+    "rough_flops_shape": "~c·#elements (c small)",
+    "bytes_memory_pattern": "Pure bandwidth unless fused",
+    "extra_knobs_to_log": ["alpha_calls", "fuse_ratio", "KAN_basis_count"]
+  },
+  "B5": {
+    "basis_op": "Normalization / whitening",
+    "covers": "LayerNorm, RMSNorm, BatchNorm (+ affine)",
+    "typical_kernels_examples": ["reduce-mean/var", "scale", "shift"],
+    "rough_flops_shape": "~O(#elements) with small reductions",
+    "bytes_memory_pattern": "Two passes unless fused; bandwidth-heavy",
+    "extra_knobs_to_log": ["reduction_length", "fuse_ratio"]
+  },
+  "B6": {
+    "basis_op": "Reductions / pooling",
+    "covers": "Max/avg pool, global pool, top-k, argmax",
+    "typical_kernels_examples": ["reduce_*", "pool*"],
+    "rough_flops_shape": "~O(#elements)",
+    "bytes_memory_pattern": "Often latency-sensitive; low intensity",
+    "extra_knobs_to_log": ["window_size", "stride", "top_k"]
+  },
+  "B7": {
+    "basis_op": "Routing / masking",
+    "covers": "MoE gating, token routing, sparse masks",
+    "typical_kernels_examples": ["router MLP", "top-k select", "mask apply"],
+    "rough_flops_shape": "Router ~B1-sized; apply is B4/B9-ish",
+    "bytes_memory_pattern": "Irregular access; control flow pain",
+    "extra_knobs_to_log": ["alpha_selectivity (fraction_active)", "expert_load_skew"]
+  },
+  "B8": {
+    "basis_op": "Sequence scan / recurrence",
+    "covers": "Prefix-sum, RNN/SSM updates, causal DP",
+    "typical_kernels_examples": ["scan kernels", "A^t x recurrences"],
+    "rough_flops_shape": "~O(T·d) per layer",
+    "bytes_memory_pattern": "Good cache reuse if fused; latency chains",
+    "extra_knobs_to_log": ["block_size", "scan_depth"]
+  },
+  "B9": {
+    "basis_op": "Indexing / gather-scatter",
+    "covers": "Sparse ops, graph conv message passing",
+    "typical_kernels_examples": ["gather", "scatter_add", "CSR/COO"],
+    "rough_flops_shape": "Depends on sparsity; mostly memory",
+    "bytes_memory_pattern": "Random access, poor coalescing",
+    "extra_knobs_to_log": ["nnz_density", "collisions", "cache_miss_rate"]
+  },
+  "B10": {
+    "basis_op": "Spectral / transforms",
+    "covers": "FFT/DWT, circulant tricks, RoPE rotations",
+    "typical_kernels_examples": ["fft", "rfft", "small rotations"],
+    "rough_flops_shape": "FFT ~O(n log n); RoPE ~O(#elements)",
+    "bytes_memory_pattern": "FFT has big temporaries; RoPE is cheap",
+    "extra_knobs_to_log": ["transform_size", "temp_bytes"]
+  },
+  "B11": {
+    "basis_op": "Random / sampling / augment",
+    "covers": "Dropout, noise, randperm, augmentation",
+    "typical_kernels_examples": ["RNG", "mask apply", "flips/crops"],
+    "rough_flops_shape": "~O(#elements)",
+    "bytes_memory_pattern": "RNG cost + writeback; fuse when possible",
+    "extra_knobs_to_log": ["rng_type", "keep_prob", "augment_recipe"]
+  },
+  "B12": {
+    "basis_op": "Communication / I-O",
+    "covers": "All-reduce, all-gather, P2P, CPU↔GPU DMA, KV moves",
+    "typical_kernels_examples": ["NCCL collectives", "memcpy D2D/H2D"],
+    "rough_flops_shape": "N/A (network/PCIe bound)",
+    "bytes_memory_pattern": "Bandwidth/latency of links dominate",
+    "extra_knobs_to_log": ["bytes_by_link", "overlap_percent", "bucket_sizes"]
+  }
+}
