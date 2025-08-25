@@ -1,0 +1,8 @@
+{
+  "description": "Specification of task demand weight vectors (w_t) used to map a model's capability vector to expected performance on a given benchmark. Each task weight captures the relative importance of the operations‑basis coefficients and training motifs for that task.",
+  "fields": {
+    "benchmark_name": "Name of the benchmark or evaluation suite (e.g., GAIA, GPQA, SWE‑bench, ARC‑AGI, MMLU‑Pro).",
+    "weights": "A mapping from basis identifiers (B1–B12) and selected beta motifs to numerical weights. These weights are learned from regression on empirical performance data and reflect how demanding the task is on each primitive.",
+    "notes": "Optional notes about the task's characteristics, such as domain (vision, language, multimodal), required reasoning depth, or tool use."
+  }
+}
