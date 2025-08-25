@@ -1,0 +1,27 @@
+{
+  "alpha": {
+    "description": "Coefficients that quantify how much each operations-basis element contributes to a model's compute, memory use, and geometric properties. Alpha captures the static cost of the architecture.",
+    "metrics": {
+      "flops": "Floating\u2011point operations spent in a particular basis operation per input sample or token. This measures compute cost.",
+      "bytes": "Bytes moved through device memory and inter\u2011device links for the operation. This measures memory bandwidth consumption.",
+      "calls": "Number of kernel launches for the operation. A proxy for latency and launch overhead.",
+      "intensity": "Ratio of FLOPs to bytes (FLOPs/byte). High intensity means compute\u2011bound; low intensity means bandwidth\u2011bound.",
+      "receptive": "Effective receptive field contributed by the operation. Larger receptive fields capture longer\u2011range dependencies.",
+      "equivariance": "Symmetries or invariances enforced by the operation (e.g., translation equivariance in convolution).",
+      "selectivity": "Fraction of inputs or tokens actively processed (e.g., top\u2011k sparsity in attention or MoE routing)."
+    }
+  },
+  "beta": {
+    "description": "Coefficients that quantify training\u2011loop and execution motifs outside of the forward computation. Beta captures scheduling, optimisation and numerical choices that influence performance.",
+    "metrics": {
+      "budget": "Proportion of wall\u2011clock time spent in a particular motif, such as activation checkpointing or optimisation steps.",
+      "precision": "Share of computation performed in different numeric formats (e.g., bf16, fp8, int8). This affects speed, memory, and stability.",
+      "communication": "Fraction of execution time spent on communication primitives (all\u2011reduce, all\u2011gather, parameter exchange).",
+      "microbatch": "Microbatch or gradient accumulation factor used to balance memory and throughput in training.",
+      "optimizer": "Type of optimiser (e.g., SGD, AdamW, Lion) and associated hyperparameters.",
+      "schedule": "Learning rate schedule and warmup strategy, such as cosine decay or step schedule.",
+      "parallelism_plan": "Parallelism strategy across devices: data parallelism, tensor parallelism, pipeline parallelism, ZeRO stage, or hybrids.",
+      "checkpointing": "Whether activation checkpointing is used to trade extra computation for lower memory usage."
+    }
+  }
+}
